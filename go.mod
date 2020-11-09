@@ -1,3 +1,3 @@
-module github.com/hjd919/gomod
+module github.com/hjd919/gom
 
 go 1.14

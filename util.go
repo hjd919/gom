@@ -1,4 +1,4 @@
-package util
+package gom
 
 import (
 	"encoding/json"

@@ -1,5 +1,8 @@
 package gom
 
+// https://github.com/olivere/elastic/wiki/BulkIndex
+// https://github.com/olivere/elastic/wiki/BulkProcessor
+
 import (
 	"context"
 	"encoding/json"
@@ -22,7 +25,7 @@ func BulkProcessor(name string) (*elastic.BulkProcessor, error) {
 		Workers(4).                      // number of workers
 		BulkActions(1000).               // commit if # requests >= 1000
 		BulkSize(2 << 20).               // commit if size of requests >= 2 MB
-		FlushInterval(30 * time.Second). // commit every 30s
+		FlushInterval(10 * time.Second). // commit every 30s
 		Do(context.Background())
 }
 

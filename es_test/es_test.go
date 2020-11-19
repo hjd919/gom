@@ -17,12 +17,16 @@ import (
 func TestEsBatchAdd(t *testing.T) {
 	esInit()
 
-	row := &Model{
-		User:     "99949879",
-		Message:  "hhhh",
-		Retweets: 3,
+	rows := []*Model{}
+	for i := 0; i < 1500; i++ {
+		row := &Model{
+			User:     "99949879",
+			Message:  "hhhh",
+			Retweets: 3,
+		}
+		rows = append(rows, row)
 	}
-	BatchAdd([]*Model{row})
+	BatchAdd(rows)
 
 	TestEsGetList(t)
 }
@@ -193,9 +197,18 @@ func TestEsUpsert(t *testing.T) {
 }
 
 // add
-func BatchAdd(rows []*Model) (err error) {
+func BatchAdd(rows []*Model, ps ...*elastic.BulkProcessor) (err error) {
 	index := (&Model{}).TableName()
-	p, err := gom.BulkProcessor(index)
+
+	// 如果有多次添加，则从外面传processor进来
+	var p *elastic.BulkProcessor
+	if len(ps) == 0 {
+		p, err = gom.BulkProcessor(index)
+		defer p.Close()
+		defer p.Flush()
+	} else {
+		p = ps[0]
+	}
 	if err != nil {
 		log.Println(err)
 		return
@@ -205,11 +218,6 @@ func BatchAdd(rows []*Model) (err error) {
 		r := elastic.NewBulkIndexRequest().Index(index).Doc(row)
 		// Add the request r to the processor p
 		p.Add(r)
-	}
-
-	err = p.Flush()
-	if err != nil {
-		return
 	}
 	return
 }

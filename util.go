@@ -8,6 +8,20 @@ import (
 	"github.com/gogf/gf/util/gconv"
 )
 
+func PageNum(num int) int {
+	if num <= 0 {
+		return 1
+	}
+	return num
+}
+
+func PageSize(size int) int {
+	if size <= 0 {
+		return 10
+	}
+	return size
+}
+
 func ConvJsonStr(v interface{}) string {
 	b, _ := json.Marshal(v)
 	return string(b)

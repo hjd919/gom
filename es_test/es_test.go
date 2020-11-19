@@ -14,6 +14,19 @@ import (
 // curd test
 
 // add test
+func TestEsBatchAdd(t *testing.T) {
+	esInit()
+
+	row := &Model{
+		User:     "99949879",
+		Message:  "hhhh",
+		Retweets: 3,
+	}
+	BatchAdd([]*Model{row})
+
+	TestEsGetList(t)
+}
+
 func TestEsAdd(t *testing.T) {
 	esInit()
 
@@ -72,6 +85,14 @@ func TestEsDelById(t *testing.T) {
 	TestEsGetList(t)
 }
 
+func TestEsDelIndexById(t *testing.T) {
+	esInit()
+
+	DelIndex()
+
+	TestEsGetList(t)
+}
+
 // get test
 func TestEsGetById(t *testing.T) {
 	id := "1"
@@ -88,7 +109,7 @@ func TestEsGetList(t *testing.T) {
 		PageSize:  10,
 		SortType:  "",
 		SortField: "",
-		Keyword:   "hjd",
+		Keyword:   "",
 	})
 	log.Println(total, gom.JsonEncode(rows), err)
 }
@@ -114,12 +135,13 @@ func (t *Model) TableName() string {
 	return "twitter"
 }
 
-// add&upd
+// mapping
 func TestEsUpsert(t *testing.T) {
 	esInit()
+	index := (&Model{}).TableName()
 	client := gom.Es()
 	// Use the IndexExists service to check if a specified index exists.
-	exists, err := client.IndexExists("twitter").Do(context.Background())
+	exists, err := client.IndexExists(index).Do(context.Background())
 	if err != nil {
 		// Handle error
 		panic(err)
@@ -158,7 +180,8 @@ func TestEsUpsert(t *testing.T) {
 	}
 }
 `
-		createIndex, err := client.CreateIndex("twitter").Body(mapping).Do(context.Background())
+
+		createIndex, err := client.CreateIndex(index).Body(mapping).Do(context.Background())
 		if err != nil {
 			// Handle error
 			panic(err)
@@ -167,23 +190,30 @@ func TestEsUpsert(t *testing.T) {
 			// Not acknowledged
 		}
 	}
-
-	// Index a tweet (using JSON serialization)
-	tweet1 := Model{User: "olivere", Message: "Take Five", Retweets: 0}
-	put1, err := client.Index().
-		Index("twitter").
-		Id("1").
-		BodyJson(tweet1).
-		Do(context.Background())
-	if err != nil {
-		// Handle error
-		panic(err)
-	}
-	fmt.Printf("Indexed tweet %s to index %s, type %s\n", put1.Id, put1.Index, put1.Type)
-
 }
 
 // add
+func BatchAdd(rows []*Model) (err error) {
+	index := (&Model{}).TableName()
+	p, err := gom.BulkProcessor(index)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	for _, row := range rows {
+		r := elastic.NewBulkIndexRequest().Index(index).Doc(row)
+		// Add the request r to the processor p
+		p.Add(r)
+	}
+
+	err = p.Flush()
+	if err != nil {
+		return
+	}
+	return
+}
+
 func Add(row *Model) (err error) {
 	client := gom.Es()
 	index := (&Model{}).TableName()
@@ -268,6 +298,19 @@ func DelByQuery(user string) (err error) {
 	boolQuery.Filter(elastic.NewTermQuery("user", user))
 
 	_, err = client.DeleteByQuery().Index(index).Query(boolQuery).Do(context.Background())
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	return
+}
+
+func DelIndex() (err error) {
+	client := gom.Es()
+	index := (&Model{}).TableName()
+
+	_, err = client.DeleteIndex(index).Do(context.Background())
 	if err != nil {
 		log.Println(err)
 		return

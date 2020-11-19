@@ -16,6 +16,16 @@ func Es() *elastic.Client {
 	return __es.orm
 }
 
+func BulkProcessor(name string) (*elastic.BulkProcessor, error) {
+	// Setup a bulk processor
+	return __es.orm.BulkProcessor().Name(name).
+		Workers(4).                      // number of workers
+		BulkActions(1000).               // commit if # requests >= 1000
+		BulkSize(2 << 20).               // commit if size of requests >= 2 MB
+		FlushInterval(30 * time.Second). // commit every 30s
+		Do(context.Background())
+}
+
 func EsInit(conf *EsConfig) {
 	__es = newEs(ctx, conf)
 }
@@ -39,9 +49,10 @@ func PrintQuery(src interface{}) {
 // -inner
 
 type gomEs struct {
-	orm  *elastic.Client
-	conf *EsConfig
-	ctx  context.Context
+	orm           *elastic.Client
+	conf          *EsConfig
+	ctx           context.Context
+	bulkProcessor *elastic.BulkProcessor
 }
 
 type EsConfig struct {
@@ -64,10 +75,13 @@ func newEs(ctx context.Context, conf *EsConfig) *gomEs {
 	if db.conf.User != "" {
 		clientOpts = append(clientOpts, elastic.SetBasicAuth(db.conf.User, db.conf.Password))
 	}
-	db.orm, err = elastic.NewClient(clientOpts...)
+	client, err := elastic.NewClient(clientOpts...)
 	if err != nil {
 		panic("create elastic client failed, err:" + err.Error())
 	}
+
+	db.orm = client
+
 	// if conf.AutoPing {
 	// AsyncFunc(db.ping)
 	// }

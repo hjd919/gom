@@ -88,7 +88,7 @@ func TestEsGetList(t *testing.T) {
 		PageSize:  10,
 		SortType:  "",
 		SortField: "",
-		Keyword:   "",
+		Keyword:   "hjd",
 	})
 	log.Println(total, gom.JsonEncode(rows), err)
 }
@@ -260,6 +260,22 @@ func DelById(id string) (err error) {
 	return
 }
 
+func DelByQuery(user string) (err error) {
+	client := gom.Es()
+	index := (&Model{}).TableName()
+
+	boolQuery := elastic.NewBoolQuery()
+	boolQuery.Filter(elastic.NewTermQuery("user", user))
+
+	_, err = client.DeleteByQuery().Index(index).Query(boolQuery).Do(context.Background())
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	return
+}
+
 // get
 func GetById(id string) (row *Model, err error) {
 	client := gom.Es()
@@ -294,13 +310,24 @@ type ListParam struct {
 
 func GetList(param *ListParam) (total int64, rows []*Model, err error) {
 	client := gom.Es()
-	search := client.Search()
 
 	// filter
+	boolQuery := elastic.NewBoolQuery()
 	if param.Keyword != "" {
-		termQuery := elastic.NewTermQuery("user", param.Keyword)
-		search = search.Query(termQuery)
+		boolQuery.Filter(elastic.NewTermQuery("user", param.Keyword))
 	}
+	// if param.Tag != "" {
+	// 	boolQuery.Filter(elastic.NewTermQuery("tag", param.Tag))
+	// }
+	// if param.MultiName != "" {
+	// 	boolQuery.Filter(elastic.NewMultiMatchQuery(param.MultiName, "video_name", "tag", "video_id", "account_id"))
+	// }
+	// if param.LikeCountMax > 0 {
+	// 	rangeQuery := elastic.NewRangeQuery("like_count")
+	// 	rangeQuery.Gte(param.LikeCountMin)
+	// 	rangeQuery.Lt(param.LikeCountMax)
+	// 	boolQuery.Filter(rangeQuery)
+	// }
 
 	// sort
 	sortField, sortType := "_id", false
@@ -317,11 +344,11 @@ func GetList(param *ListParam) (total int64, rows []*Model, err error) {
 	from := (pageNum - 1) * pageSize
 
 	index := (&Model{}).TableName()
-	searchResult, err := search.
+	searchResult, err := client.Search().
 		Index(index).
+		Query(boolQuery).
 		Sort(sortField, sortType).
 		From(from).Size(pageSize).
-		// Pretty(true).            // pretty print request and response JSON
 		Do(context.Background()) // execute
 	if err != nil {
 		log.Println(err)

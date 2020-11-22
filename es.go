@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"github.com/olivere/elastic/v7"
@@ -19,25 +20,20 @@ func Es() *elastic.Client {
 	return __es.orm
 }
 
-func BulkProcessor(name string) (*elastic.BulkProcessor, error) {
-	// Setup a bulk processor
-	return __es.orm.BulkProcessor().Name(name).
-		Workers(4).                      // number of workers
-		BulkActions(1000).               // commit if # requests >= 1000
-		BulkSize(2 << 20).               // commit if size of requests >= 2 MB
-		FlushInterval(10 * time.Second). // commit every 30s
-		Do(context.Background())
+func BulkProcessor(name string) *elastic.BulkProcessor {
+	return __es.bulkProcessor
 }
 
 func EsInit(conf *EsConfig) {
 	__es = newEs(ctx, conf)
 }
 
-func EsSortType(sortType string) bool {
-	if sortType == "asc" {
-		return true
+func EsSort(sortField, sortOrder string) (sorter elastic.Sorter) {
+	sorter = elastic.NewFieldSort("create_time")
+	if sortOrder == "asc" {
+		return sorter
 	}
-	return false
+	return sorter.Desc()
 }
 
 func PrintQuery(src interface{}) {
@@ -49,19 +45,29 @@ func PrintQuery(src interface{}) {
 	fmt.Println(string(data))
 }
 
-// -inner
+type EsConfig struct {
+	Urls       []string
+	User       string
+	Password   string
+	LogLevel   int
+	BulkWorker int
+}
+type EsSearch struct {
+	MustQuery    []elastic.Query
+	MustNotQuery []elastic.Query
+	ShouldQuery  []elastic.Query
+	Filters      []elastic.Query
+	Sorters      []elastic.Sorter
+	From         int //分页
+	Size         int
+}
 
+// -inner
 type gomEs struct {
 	orm           *elastic.Client
 	conf          *EsConfig
 	ctx           context.Context
 	bulkProcessor *elastic.BulkProcessor
-}
-
-type EsConfig struct {
-	Urls     []string
-	User     string
-	Password string
 }
 
 func newEs(ctx context.Context, conf *EsConfig) *gomEs {
@@ -75,9 +81,18 @@ func newEs(ctx context.Context, conf *EsConfig) *gomEs {
 		elastic.SetURL(db.conf.Urls...),
 		elastic.SetSniff(false),
 	}
+
 	if db.conf.User != "" {
 		clientOpts = append(clientOpts, elastic.SetBasicAuth(db.conf.User, db.conf.Password))
 	}
+
+	if db.conf.LogLevel > 0 {
+		// 设置错误日志输出
+		clientOpts = append(clientOpts, elastic.SetErrorLog(log.New(os.Stderr, "ELASTIC ", log.LstdFlags)))
+		// 设置info日志输出
+		clientOpts = append(clientOpts, elastic.SetInfoLog(log.New(os.Stdout, "", log.LstdFlags)))
+	}
+
 	client, err := elastic.NewClient(clientOpts...)
 	if err != nil {
 		panic("create elastic client failed, err:" + err.Error())
@@ -85,26 +100,40 @@ func newEs(ctx context.Context, conf *EsConfig) *gomEs {
 
 	db.orm = client
 
-	// if conf.AutoPing {
-	// AsyncFunc(db.ping)
-	// }
+	db.bulkProcessor, err = client.BulkProcessor().Name("bulk_processor").
+		Workers(db.conf.BulkWorker).     // number of workers
+		BulkActions(1000).               // commit if # requests >= 1000
+		BulkSize(2 << 20).               // commit if size of requests >= 2 MB
+		FlushInterval(10 * time.Second). // commit every 30s
+		Do(ctx)
+	if err != nil {
+		panic("create elastic bulkProcessor failed, err:" + err.Error())
+	}
+
+	// heath
+	go db.ping()
+
 	return db
 }
 
 func (db *gomEs) ping() {
-	dur := 60 * time.Second
-	ti := time.NewTimer(dur)
-	defer ti.Stop()
+	// dur := 60 * time.Second
+	// ti := time.NewTimer(dur)
+	// ti := time.NewTicker(dur)
+	// defer ti.Stop()
 	for {
 		select {
 		case <-db.ctx.Done():
+			// 程序退出，断开bulkProcessor
+			log.Println("程序退出，断开bulkProcessor")
+			db.bulkProcessor.Close()
 			return
-		case <-ti.C:
-			pingResult, num, err := db.orm.Ping(db.conf.Urls[0]).Do(db.ctx)
-			if err != nil {
-				log.Println("[es-ping]", pingResult, num, err.Error())
-			}
-			ti.Reset(dur)
+			// case <-ti.C:
+			// 	pingResult, num, err := db.orm.Ping(db.conf.Urls[0]).Do(db.ctx)
+			// 	if err != nil {
+			// 		log.Println("es ping error:", pingResult, num, err.Error())
+			// 	}
+			// 	log.Println("es ping:", pingResult, num, err.Error())
 		}
 	}
 }

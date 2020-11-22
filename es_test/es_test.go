@@ -11,6 +11,13 @@ import (
 	"github.com/olivere/elastic/v7"
 )
 
+// init index test
+func TestEsInitIndex(t *testing.T) {
+	esInit()
+
+	(&Model{}).InitIndex()
+}
+
 // curd test
 
 // add test
@@ -35,7 +42,7 @@ func TestEsAdd(t *testing.T) {
 	esInit()
 
 	row := &Model{
-		User: "99949879",
+		User: "999",
 	}
 	Add(row)
 
@@ -120,9 +127,11 @@ func TestEsGetList(t *testing.T) {
 
 func esInit() {
 	esConf := &gom.EsConfig{
-		Urls:     []string{"http://es-cn-n6w1r3anu0006zb5t.public.elasticsearch.aliyuncs.com:9200"},
-		User:     "elastic",
-		Password: "XZ527shortvideo",
+		Urls:       []string{"http://es-cn-n6w1r3anu0006zb5t.public.elasticsearch.aliyuncs.com:9200"},
+		User:       "elastic",
+		Password:   "XZ527shortvideo",
+		BulkWorker: 4,
+		LogLevel:   1,
 	}
 	gom.EsInit(esConf)
 }
@@ -139,24 +148,23 @@ func (t *Model) TableName() string {
 	return "twitter"
 }
 
-// mapping
-func TestEsUpsert(t *testing.T) {
-	esInit()
-	index := (&Model{}).TableName()
+// init index
+func (t *Model) InitIndex() error {
+	index := t.TableName()
 	client := gom.Es()
 	// Use the IndexExists service to check if a specified index exists.
 	exists, err := client.IndexExists(index).Do(context.Background())
 	if err != nil {
 		// Handle error
-		panic(err)
+		return err
 	}
 	if !exists {
 		// Create a new index.
 		mapping := `
 {
 	"settings":{
-		"number_of_shards":1,
-		"number_of_replicas":0
+		"number_of_shards": 2,
+		"number_of_replicas": 0
 	},
 	"mappings":{
 		"properties":{
@@ -184,16 +192,18 @@ func TestEsUpsert(t *testing.T) {
 	}
 }
 `
-
 		createIndex, err := client.CreateIndex(index).Body(mapping).Do(context.Background())
 		if err != nil {
 			// Handle error
-			panic(err)
+			return err
 		}
 		if !createIndex.Acknowledged {
 			// Not acknowledged
+			err := fmt.Errorf("IndexInit-!createIndex.Acknowledged")
+			return err
 		}
 	}
+	return err
 }
 
 // add
@@ -203,8 +213,7 @@ func BatchAdd(rows []*Model, ps ...*elastic.BulkProcessor) (err error) {
 	// 如果有多次添加，则从外面传processor进来
 	var p *elastic.BulkProcessor
 	if len(ps) == 0 {
-		p, err = gom.BulkProcessor(index)
-		defer p.Close()
+		p = gom.BulkProcessor(index)
 		defer p.Flush()
 	} else {
 		p = ps[0]
@@ -229,6 +238,7 @@ func Add(row *Model) (err error) {
 	addResult, err := client.Index().
 		Index(index).
 		BodyJson(row).
+		Refresh("wait_for").
 		Do(context.Background())
 	if err != nil {
 		return
@@ -350,56 +360,69 @@ func GetById(id string) (row *Model, err error) {
 	return
 }
 
+//bool query 条件
+
 type ListParam struct {
 	PageNum   int    `json:"page_num"`
 	PageSize  int    `json:"page_size"`
-	SortType  string `json:"sort_type"`
+	SortOrder string `json:"sort_order"`
 	SortField string `json:"sort_field"`
 
 	Keyword string `json:"keyword"`
+}
+
+func (p *ListParam) ToFilter() *gom.EsSearch {
+	var search gom.EsSearch
+	if len(p.Keyword) != 0 {
+		search.ShouldQuery = append(search.ShouldQuery, elastic.NewMatchQuery("user", p.Keyword))
+	}
+
+	// range
+	// if p.LikeCountMax > 0 {
+	// 	rangeQuery := elastic.NewRangeQuery("like_count").
+	// 		Gte(param.LikeCountMin).Lt(param.LikeCountMax)
+	// 	boolQuery.Filter(rangeQuery)
+	// }
+
+	if len(p.SortField) != 0 {
+		search.Sorters = append(search.Sorters, gom.EsOrder(p.SortField, p.SortOrder))
+	}
+
+	pageNum, pageSize := gom.Page(p.PageNum, p.PageSize)
+	search.From = (pageNum - 1) * pageSize
+	search.Size = pageSize
+	return &search
 }
 
 func GetList(param *ListParam) (total int64, rows []*Model, err error) {
 	client := gom.Es()
 
 	// filter
+	filter := param.ToFilter()
 	boolQuery := elastic.NewBoolQuery()
-	if param.Keyword != "" {
-		boolQuery.Filter(elastic.NewTermQuery("user", param.Keyword))
+	boolQuery.Must(filter.MustQuery...)
+	boolQuery.MustNot(filter.MustNotQuery...)
+	boolQuery.Should(filter.ShouldQuery...)
+	boolQuery.Filter(filter.Filters...)
+
+	// 当should不为空时，保证至少匹配should中的一项
+	if len(filter.MustQuery) == 0 && len(filter.MustNotQuery) == 0 && len(filter.ShouldQuery) > 0 {
+		boolQuery.MinimumShouldMatch("1")
 	}
+
 	// if param.Tag != "" {
 	// 	boolQuery.Filter(elastic.NewTermQuery("tag", param.Tag))
 	// }
 	// if param.MultiName != "" {
 	// 	boolQuery.Filter(elastic.NewMultiMatchQuery(param.MultiName, "video_name", "tag", "video_id", "account_id"))
 	// }
-	// if param.LikeCountMax > 0 {
-	// 	rangeQuery := elastic.NewRangeQuery("like_count")
-	// 	rangeQuery.Gte(param.LikeCountMin)
-	// 	rangeQuery.Lt(param.LikeCountMax)
-	// 	boolQuery.Filter(rangeQuery)
-	// }
-
-	// sort
-	sortField, sortType := "_id", false
-	if param.SortField != "" {
-		sortField = param.SortField
-	}
-	if param.SortType != "" {
-		sortType = gom.EsSortType(param.SortType)
-	}
-
-	// page
-	pageNum := gom.PageNum(param.PageNum)
-	pageSize := gom.PageSize(param.PageSize)
-	from := (pageNum - 1) * pageSize
 
 	index := (&Model{}).TableName()
 	searchResult, err := client.Search().
 		Index(index).
 		Query(boolQuery).
-		Sort(sortField, sortType).
-		From(from).Size(pageSize).
+		Sort(filter.Sorters...).
+		From(filter.From).Size(filter.Size).
 		Do(context.Background()) // execute
 	if err != nil {
 		log.Println(err)

@@ -25,11 +25,11 @@ func TestEsBatchAdd(t *testing.T) {
 	esInit()
 
 	rows := []*Model{}
-	for i := 0; i < 1500; i++ {
+	for i := 0; i < 100; i++ {
 		row := &Model{
-			User:     "99949879",
-			Message:  "hhhh",
-			Retweets: 3,
+			User:     "hjdgood",
+			Message:  "hjd qiang",
+			Retweets: i,
 		}
 		rows = append(rows, row)
 	}
@@ -42,7 +42,7 @@ func TestEsAdd(t *testing.T) {
 	esInit()
 
 	row := &Model{
-		User: "999",
+		User: "666",
 	}
 	Add(row)
 
@@ -118,9 +118,9 @@ func TestEsGetList(t *testing.T) {
 	total, rows, err := GetList(&ListParam{
 		PageNum:   1,
 		PageSize:  10,
-		SortType:  "",
 		SortField: "",
-		Keyword:   "",
+		SortOrder: "",
+		Keyword:   "qiang",
 	})
 	log.Println(total, gom.JsonEncode(rows), err)
 }
@@ -238,7 +238,7 @@ func Add(row *Model) (err error) {
 	addResult, err := client.Index().
 		Index(index).
 		BodyJson(row).
-		Refresh("wait_for").
+		// Refresh("wait_for"). // 同步添加时需要
 		Do(context.Background())
 	if err != nil {
 		return
@@ -373,9 +373,16 @@ type ListParam struct {
 
 func (p *ListParam) ToFilter() *gom.EsSearch {
 	var search gom.EsSearch
+
+	// match one field
 	if len(p.Keyword) != 0 {
-		search.ShouldQuery = append(search.ShouldQuery, elastic.NewMatchQuery("user", p.Keyword))
+		search.ShouldQuery = append(search.ShouldQuery, elastic.NewMatchQuery("message", p.Keyword))
 	}
+
+	// match many field
+	// if len(p.Keyword) != 0 {
+	// 	search.ShouldQuery = append(search.ShouldQuery, elastic.NewMultiMatchQuery(p.Keyword, "user", "tag"))
+	// }
 
 	// range
 	// if p.LikeCountMax > 0 {
@@ -385,7 +392,7 @@ func (p *ListParam) ToFilter() *gom.EsSearch {
 	// }
 
 	if len(p.SortField) != 0 {
-		search.Sorters = append(search.Sorters, gom.EsOrder(p.SortField, p.SortOrder))
+		search.Sorters = append(search.Sorters, gom.EsSort(p.SortField, p.SortOrder))
 	}
 
 	pageNum, pageSize := gom.Page(p.PageNum, p.PageSize)
@@ -410,18 +417,11 @@ func GetList(param *ListParam) (total int64, rows []*Model, err error) {
 		boolQuery.MinimumShouldMatch("1")
 	}
 
-	// if param.Tag != "" {
-	// 	boolQuery.Filter(elastic.NewTermQuery("tag", param.Tag))
-	// }
-	// if param.MultiName != "" {
-	// 	boolQuery.Filter(elastic.NewMultiMatchQuery(param.MultiName, "video_name", "tag", "video_id", "account_id"))
-	// }
-
 	index := (&Model{}).TableName()
 	searchResult, err := client.Search().
 		Index(index).
 		Query(boolQuery).
-		Sort(filter.Sorters...).
+		SortBy(filter.Sorters...).
 		From(filter.From).Size(filter.Size).
 		Do(context.Background()) // execute
 	if err != nil {

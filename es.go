@@ -28,12 +28,14 @@ func EsInit(conf *EsConfig) {
 	__es = newEs(ctx, conf)
 }
 
-func EsSort(sortField, sortOrder string) (sorter elastic.Sorter) {
-	sorter = elastic.NewFieldSort("create_time")
-	if sortOrder == "asc" {
-		return sorter
+func EsSort(sortField, sortOrder string) elastic.Sorter {
+	sorter := elastic.NewFieldSort(sortField)
+	if sortOrder == "desc" {
+		sorter = sorter.Desc()
+	} else {
+		sorter = sorter.Asc()
 	}
-	return sorter.Desc()
+	return sorter
 }
 
 func PrintQuery(src interface{}) {

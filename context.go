@@ -15,7 +15,6 @@ var (
 
 func init() {
 	signal.Notify(sig, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGUSR1, syscall.SIGUSR2)
-
 	go func() {
 		for si := range sig {
 			switch si {

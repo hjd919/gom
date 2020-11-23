@@ -2,7 +2,7 @@ package gom
 
 import "fmt"
 
-func main() {
+func main2() {
 	slice := make([]int, 2, 3)
 	for i := 0; i < len(slice); i++ {
 		slice[i] = i

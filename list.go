@@ -1,8 +1,10 @@
 package gom
 
 import (
+	"log"
 	"reflect"
 	"strings"
+	"time"
 )
 
 /*
@@ -15,6 +17,44 @@ if req.Sort != "" {
 }
 orderStr = strings.Join(orderArr, ",")
 */
+
+// filter - num
+func NumRange(numRange []int64) (startNum, endNum int64) {
+	if len(numRange) == 0 {
+		return
+	}
+	// eq
+	if len(numRange) == 1 {
+		startNum = numRange[0]
+		endNum = numRange[0]
+		return
+	}
+	// between
+	if len(numRange) == 2 {
+		startNum = numRange[0]
+		endNum = numRange[1]
+		return
+	}
+	return
+}
+
+// filter - date
+func DateRange(dateRange []string) (startTime, endTime int64) {
+	if len(dateRange) == 0 {
+		return
+	}
+	startTimeObj, err := time.ParseInLocation(DATE, dateRange[0], time.Local)
+	if err != nil {
+		log.Println("DateRange=", err)
+		return
+	}
+	endTimeObj, err := time.ParseInLocation(DATE, dateRange[1], time.Local)
+	if err != nil {
+		log.Println("DateRange=", err)
+		return
+	}
+	return startTimeObj.Unix(), endTimeObj.Unix()
+}
 
 func Order(sortType, sortField string) string {
 	if sortType != "" && sortField != "" {

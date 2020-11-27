@@ -7,6 +7,7 @@ import (
 	"log"
 	"testing"
 
+	"github.com/gogf/gf/util/gconv"
 	"github.com/hjd919/gom"
 	"github.com/olivere/elastic/v7"
 )
@@ -15,21 +16,42 @@ import (
 func TestEsInitIndex(t *testing.T) {
 	esInit()
 
-	(&Model{}).InitIndex()
+	err := (&Model{}).InitIndex()
+	if err != nil {
+		log.Println(err)
+	}
 }
 
-// curd test
+// aggs test
 
 // add test
 func TestEsBatchAdd(t *testing.T) {
 	esInit()
 
 	rows := []*Model{}
-	for i := 0; i < 100; i++ {
+	for i := 60; i < 80; i++ {
 		row := &Model{
-			User:     "hjdgood",
-			Message:  "hjd qiang",
-			Retweets: i,
+			User:    "我叫胡建德" + gconv.String(i),
+			Message: "我叫胡建德" + gconv.String(i),
+			Content: `最近这段时间，《演员请就位2》这档综艺频上热搜，无论是导师还是演员，都贡献过不少话题，毕竟导师咖位够大，加上请了不少有争议的演员，几乎每一期都能登上热搜榜。郭敬明给表现差演员发S卡引争议、赵薇点评女演员矫情、马苏获S卡感言、孟子义改装被郭敬明怒骂等等，每次上热搜，都能引发大家热烈讨论。
+
+
+
+			而令家居君印象最深的，当属点评嘉宾李诚儒老师了，他凭借在节目中的耿直发言也是圈粉无数。郭敬明导演发S卡时，他说自己不喜欢翻手为云覆手为雨的人，被问到对陈凯歌导演电影《无极》的印象时，他更是直言自己没看，因为不喜欢形式大于内容的电影。
+			
+			
+			
+			
+			
+			作为娱乐圈前辈，李诚儒老师怼郭敬明导演时，作为后辈的郭敬明虽然总想据理力争，但也不敢怼回去。但当他说没看过《无极》后，陈凯歌则用“梨园世家的子弟相对比较保守”的话，暗讽他不能接受新鲜事物。
+			
+			
+			
+			两人的这次争锋相对也自然迅速爬上热搜，但吃瓜群众更多好奇的是，李诚儒老师不是演员么？怎么敢对陈凯歌导演这么直言不讳呢？
+			
+			
+			其实如果大家了解过李诚儒老师的身家背景后，大致就能明白原因。他在91年的时候，就在北京西单开了1000平的商场，取名“特别特”，而且商场里面还会有模特走秀，后面还有了连锁店。据称，当时商场生意好的时候，一天盈利就能到达50万，而那时的李诚儒老师，就已大牌傍身，西服七八万一套，领带上万一条，袜子100美金一双，还都是进口的，放到今天，也没多少人有这么奢侈了。而且在那时，他的座驾就是奔驰560，外汇仓里有1300多万美金，按照那时的汇率，也有6千多万人民币，而且那时的人民币，可比如今的值钱太多了。` + gconv.String(i),
+			Retweets: 200,
 		}
 		rows = append(rows, row)
 	}
@@ -120,7 +142,7 @@ func TestEsGetList(t *testing.T) {
 		PageSize:  10,
 		SortField: "",
 		SortOrder: "",
-		Keyword:   "qiang",
+		Keyword:   "李诚儒",
 	})
 	log.Println(total, gom.JsonEncode(rows), err)
 }
@@ -130,7 +152,7 @@ func esInit() {
 		Urls:       []string{"http://es-cn-n6w1r3anu0006zb5t.public.elasticsearch.aliyuncs.com:9200"},
 		User:       "elastic",
 		Password:   "XZ527shortvideo",
-		BulkWorker: 4,
+		BulkWorker: 6,
 		LogLevel:   1,
 	}
 	gom.EsInit(esConf)
@@ -141,11 +163,12 @@ type Model struct {
 	Id       string `json:"id"`
 	User     string `json:"user"`
 	Message  string `json:"message"`
+	Content  string `json:"content2"`
 	Retweets int    `json:"retweets"`
 }
 
 func (t *Model) TableName() string {
-	return "twitter"
+	return "tpl-2012"
 }
 
 // init index
@@ -162,31 +185,39 @@ func (t *Model) InitIndex() error {
 		// Create a new index.
 		mapping := `
 {
-	"settings":{
+	"settings": {
 		"number_of_shards": 2,
 		"number_of_replicas": 0
 	},
-	"mappings":{
-		"properties":{
-			"user":{
-				"type":"keyword"
+	"mappings": {
+		"properties": {
+			"user": {
+				"type": "keyword"
 			},
-			"message":{
-				"type":"text",
+			"message": {
+				"type": "text",
 				"store": true,
 				"fielddata": true
 			},
-			"retweets":{
-				"type":"long"
+			"content": {
+				"type": "text",
+				"analyzer": "ik_smart",
+				"search_analyzer": "ik_smart"
 			},
-			"tags":{
-				"type":"keyword"
+			"retweets": {
+				"type": "long"
 			},
-			"location":{
-				"type":"geo_point"
+			"age": {
+				"type": "integer"
 			},
-			"suggest_field":{
-				"type":"completion"
+			"tags": {
+				"type": "keyword"
+			},
+			"location": {
+				"type": "geo_point"
+			},
+			"suggest_field": {
+				"type": "completion"
 			}
 		}
 	}
@@ -376,7 +407,7 @@ func (p *ListParam) ToFilter() *gom.EsSearch {
 
 	// match one field
 	if len(p.Keyword) != 0 {
-		search.ShouldQuery = append(search.ShouldQuery, elastic.NewMatchQuery("message", p.Keyword))
+		search.ShouldQuery = append(search.ShouldQuery, elastic.NewMatchQuery("content", p.Keyword))
 	}
 
 	// match many field

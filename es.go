@@ -25,7 +25,7 @@ func BulkProcessor(name string) *elastic.BulkProcessor {
 }
 
 func EsInit(conf *EsConfig) {
-	__es = newEs(ctx, conf)
+	__es = newGomEs(ctx, conf)
 }
 
 func EsSort(sortField, sortOrder string) elastic.Sorter {
@@ -72,7 +72,7 @@ type gomEs struct {
 	bulkProcessor *elastic.BulkProcessor
 }
 
-func newEs(ctx context.Context, conf *EsConfig) *gomEs {
+func newGomEs(ctx context.Context, conf *EsConfig) *gomEs {
 	db := &gomEs{
 		ctx:  ctx,
 		conf: conf,

@@ -1,4 +1,4 @@
-package es_test
+package test
 
 import (
 	"context"

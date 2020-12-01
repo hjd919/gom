@@ -48,11 +48,11 @@ func PrintQuery(src interface{}) {
 }
 
 type EsConfig struct {
-	Urls       []string
-	User       string
-	Password   string
-	LogLevel   int
-	BulkWorker int
+	Urls       []string `yarm:"urls"`
+	User       string   `yarm:"user"`
+	Password   string   `yarm:"password"`
+	LogLevel   int      `yarm:"log_level"`
+	BulkWorker int      `yarm:"bulk_worker"`
 }
 type EsSearch struct {
 	MustQuery    []elastic.Query

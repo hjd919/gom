@@ -175,14 +175,11 @@ func (t *Model) TableName() string {
 func (t *Model) InitIndex() error {
 	index := t.TableName()
 	client := gom.Es()
-	// Use the IndexExists service to check if a specified index exists.
 	exists, err := client.IndexExists(index).Do(context.Background())
 	if err != nil {
-		// Handle error
 		return err
 	}
 	if !exists {
-		// Create a new index.
 		mapping := `
 {
 	"settings": {
@@ -196,7 +193,6 @@ func (t *Model) InitIndex() error {
 			},
 			"message": {
 				"type": "text",
-				"store": true,
 				"fielddata": true
 			},
 			"content": {
@@ -216,6 +212,10 @@ func (t *Model) InitIndex() error {
 			"location": {
 				"type": "geo_point"
 			},
+			"create_time": {
+				"format": "epoch_second",
+				"type": "date"
+			}
 			"suggest_field": {
 				"type": "completion"
 			}
@@ -225,11 +225,9 @@ func (t *Model) InitIndex() error {
 `
 		createIndex, err := client.CreateIndex(index).Body(mapping).Do(context.Background())
 		if err != nil {
-			// Handle error
 			return err
 		}
 		if !createIndex.Acknowledged {
-			// Not acknowledged
 			err := fmt.Errorf("IndexInit-!createIndex.Acknowledged")
 			return err
 		}
@@ -241,17 +239,12 @@ func (t *Model) InitIndex() error {
 func BatchAdd(rows []*Model, ps ...*elastic.BulkProcessor) (err error) {
 	index := (&Model{}).TableName()
 
-	// 如果有多次添加，则从外面传processor进来
 	var p *elastic.BulkProcessor
 	if len(ps) == 0 {
 		p = gom.BulkProcessor(index)
 		defer p.Flush()
 	} else {
 		p = ps[0]
-	}
-	if err != nil {
-		log.Println(err)
-		return
 	}
 
 	for _, row := range rows {

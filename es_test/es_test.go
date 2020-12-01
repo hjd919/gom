@@ -149,7 +149,7 @@ func TestEsGetList(t *testing.T) {
 
 func esInit() {
 	esConf := &gom.EsConfig{
-		Urls:       []string{"http://es-cn-n6w1r3anu0006zb5t.public.elasticsearch.aliyuncs.com:9200"},
+		Url:        "http://es-cn-n6w1r3anu0006zb5t.public.elasticsearch.aliyuncs.com:9200",
 		User:       "elastic",
 		Password:   "XZ527shortvideo",
 		BulkWorker: 6,

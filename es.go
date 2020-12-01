@@ -48,11 +48,11 @@ func PrintQuery(src interface{}) {
 }
 
 type EsConfig struct {
-	Urls       []string `yarm:"urls"`
-	User       string   `yarm:"user"`
-	Password   string   `yarm:"password"`
-	LogLevel   int      `yarm:"log_level"`
-	BulkWorker int      `yarm:"bulk_worker"`
+	Url        string `yarm:"url"`
+	User       string `yarm:"user"`
+	Password   string `yarm:"password"`
+	LogLevel   int    `yarm:"log_level"`
+	BulkWorker int    `yarm:"bulk_worker"`
 }
 type EsSearch struct {
 	MustQuery    []elastic.Query
@@ -80,7 +80,7 @@ func newEs(ctx context.Context, conf *EsConfig) *gomEs {
 
 	var err error
 	clientOpts := []elastic.ClientOptionFunc{
-		elastic.SetURL(db.conf.Urls...),
+		elastic.SetURL(db.conf.Url),
 		elastic.SetSniff(false),
 	}
 

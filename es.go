@@ -11,6 +11,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/gogf/gf/crypto/gmd5"
 	"github.com/olivere/elastic/v7"
 )
 
@@ -20,7 +21,7 @@ func Es() *elastic.Client {
 	return __es.orm
 }
 
-func BulkProcessor(name string) *elastic.BulkProcessor {
+func BulkProcessor() *elastic.BulkProcessor {
 	return __es.bulkProcessor
 }
 
@@ -47,12 +48,17 @@ func PrintQuery(src interface{}) {
 	fmt.Println(string(data))
 }
 
+func ESId(v interface{}) string {
+	idmd5, _ := gmd5.Encrypt(v)
+	return idmd5[0:20]
+}
+
 type EsConfig struct {
-	Urls       []string
-	User       string
-	Password   string
-	LogLevel   int
-	BulkWorker int
+	Url        string `yarm:"url"`
+	User       string `yarm:"user"`
+	Password   string `yarm:"password"`
+	LogLevel   int    `yarm:"log_level"`
+	BulkWorker int    `yarm:"bulk_worker"`
 }
 type EsSearch struct {
 	MustQuery    []elastic.Query
@@ -80,7 +86,7 @@ func newGomEs(ctx context.Context, conf *EsConfig) *gomEs {
 
 	var err error
 	clientOpts := []elastic.ClientOptionFunc{
-		elastic.SetURL(db.conf.Urls...),
+		elastic.SetURL(db.conf.Url),
 		elastic.SetSniff(false),
 	}
 

@@ -149,7 +149,7 @@ func TestEsGetList(t *testing.T) {
 
 func esInit() {
 	esConf := &gom.EsConfig{
-		Urls:       []string{"http://es-cn-n6w1r3anu0006zb5t.public.elasticsearch.aliyuncs.com:9200"},
+		Url:        "http://es-cn-n6w1r3anu0006zb5t.public.elasticsearch.aliyuncs.com:9200",
 		User:       "elastic",
 		Password:   "XZ527shortvideo",
 		BulkWorker: 6,
@@ -167,22 +167,19 @@ type Model struct {
 	Retweets int    `json:"retweets"`
 }
 
-func (t *Model) TableName() string {
+func TableName() string {
 	return "tpl-2012"
 }
 
 // init index
 func (t *Model) InitIndex() error {
-	index := t.TableName()
+	index := TableName()
 	client := gom.Es()
-	// Use the IndexExists service to check if a specified index exists.
 	exists, err := client.IndexExists(index).Do(context.Background())
 	if err != nil {
-		// Handle error
 		return err
 	}
 	if !exists {
-		// Create a new index.
 		mapping := `
 {
 	"settings": {
@@ -196,7 +193,6 @@ func (t *Model) InitIndex() error {
 			},
 			"message": {
 				"type": "text",
-				"store": true,
 				"fielddata": true
 			},
 			"content": {
@@ -216,6 +212,10 @@ func (t *Model) InitIndex() error {
 			"location": {
 				"type": "geo_point"
 			},
+			"create_time": {
+				"format": "epoch_second",
+				"type": "date"
+			}
 			"suggest_field": {
 				"type": "completion"
 			}
@@ -225,11 +225,9 @@ func (t *Model) InitIndex() error {
 `
 		createIndex, err := client.CreateIndex(index).Body(mapping).Do(context.Background())
 		if err != nil {
-			// Handle error
 			return err
 		}
 		if !createIndex.Acknowledged {
-			// Not acknowledged
 			err := fmt.Errorf("IndexInit-!createIndex.Acknowledged")
 			return err
 		}
@@ -239,19 +237,14 @@ func (t *Model) InitIndex() error {
 
 // add
 func BatchAdd(rows []*Model, ps ...*elastic.BulkProcessor) (err error) {
-	index := (&Model{}).TableName()
+	index := TableName()
 
-	// 如果有多次添加，则从外面传processor进来
 	var p *elastic.BulkProcessor
 	if len(ps) == 0 {
-		p = gom.BulkProcessor(index)
+		p = gom.BulkProcessor()
 		defer p.Flush()
 	} else {
 		p = ps[0]
-	}
-	if err != nil {
-		log.Println(err)
-		return
 	}
 
 	for _, row := range rows {
@@ -264,7 +257,7 @@ func BatchAdd(rows []*Model, ps ...*elastic.BulkProcessor) (err error) {
 
 func Add(row *Model) (err error) {
 	client := gom.Es()
-	index := (&Model{}).TableName()
+	index := TableName()
 	// save
 	addResult, err := client.Index().
 		Index(index).
@@ -280,7 +273,7 @@ func Add(row *Model) (err error) {
 
 func AddById(id string, row *Model) (err error) {
 	client := gom.Es()
-	index := (&Model{}).TableName()
+	index := TableName()
 	// save
 	_, err = client.Index().
 		Index(index).
@@ -296,7 +289,7 @@ func AddById(id string, row *Model) (err error) {
 // update
 func UpdById(id string, updRow map[string]interface{}) (err error) {
 	client := gom.Es()
-	index := (&Model{}).TableName()
+	index := TableName()
 
 	// save
 	_, err = client.Update().
@@ -312,7 +305,7 @@ func UpdById(id string, updRow map[string]interface{}) (err error) {
 
 func IncrFieldById(id string, field string) (err error) {
 	client := gom.Es()
-	index := (&Model{}).TableName()
+	index := TableName()
 
 	script := elastic.NewScript(fmt.Sprintf("ctx._source.%s += params.num", field)).Param("num", 1)
 	_, err = client.Update().Index(index).Id(id).
@@ -328,7 +321,7 @@ func IncrFieldById(id string, field string) (err error) {
 // del
 func DelById(id string) (err error) {
 	client := gom.Es()
-	index := (&Model{}).TableName()
+	index := TableName()
 
 	_, err = client.Delete().Index(index).Id(id).Do(context.Background())
 	if err != nil {
@@ -341,7 +334,7 @@ func DelById(id string) (err error) {
 
 func DelByQuery(user string) (err error) {
 	client := gom.Es()
-	index := (&Model{}).TableName()
+	index := TableName()
 
 	boolQuery := elastic.NewBoolQuery()
 	boolQuery.Filter(elastic.NewTermQuery("user", user))
@@ -357,7 +350,7 @@ func DelByQuery(user string) (err error) {
 
 func DelIndex() (err error) {
 	client := gom.Es()
-	index := (&Model{}).TableName()
+	index := TableName()
 
 	_, err = client.DeleteIndex(index).Do(context.Background())
 	if err != nil {
@@ -371,7 +364,7 @@ func DelIndex() (err error) {
 // get
 func GetById(id string) (row *Model, err error) {
 	client := gom.Es()
-	index := (&Model{}).TableName()
+	index := TableName()
 
 	getResult, err := client.Get().
 		Index(index).
@@ -448,7 +441,7 @@ func GetList(param *ListParam) (total int64, rows []*Model, err error) {
 		boolQuery.MinimumShouldMatch("1")
 	}
 
-	index := (&Model{}).TableName()
+	index := TableName()
 	searchResult, err := client.Search().
 		Index(index).
 		Query(boolQuery).

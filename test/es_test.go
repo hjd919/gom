@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"testing"
+	"time"
 
 	"github.com/gogf/gf/util/gconv"
 	"github.com/hjd919/gom"
@@ -23,6 +24,39 @@ func TestEsInitIndex(t *testing.T) {
 }
 
 // aggs test
+// Aggregate query
+func AggQuery(keyword string) (*elastic.SearchResult, error) {
+	index := TableName()
+	client := gom.Es()
+	agg := elastic.NewDateHistogramAggregation().
+		Field("@timestamp").
+		TimeZone("Asia/Shanghai").
+		MinDocCount(1).
+		Interval("1m")
+
+	// 查询一分钟前是否出现关键字keyword
+	boolQuery := elastic.NewBoolQuery().
+		Filter(elastic.NewRangeQuery("@timestamp").
+			Format("strict_date_optional_time").
+			Gte(time.Now().Add(time.Minute * -1).Format(time.RFC3339)).
+			Lte(time.Now().Format(time.RFC3339))).
+		Filter(elastic.NewMultiMatchQuery(keyword).
+			Type("best_fields").
+			Lenient(true))
+
+	result, err := client.Search().
+		Index(index).
+		Query(boolQuery).
+		Timeout("30000ms").
+		IgnoreUnavailable(true).
+		Size(500).
+		Aggregation("aggs", agg).
+		Version(true).
+		StoredFields("*").
+		Do(context.Background())
+
+	return result, err
+}
 
 // add test
 func TestEsBatchAdd(t *testing.T) {

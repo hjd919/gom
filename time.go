@@ -4,6 +4,7 @@ import "time"
 
 const DATETIME = "2006-01-02 15:03:04"
 const DATE = "2006-01-02"
+const DATELOG = "20060102"
 const TIME = "15:03:04"
 
 // 废除

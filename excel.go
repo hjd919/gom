@@ -9,8 +9,8 @@ import (
 
 // excel行的demo结构体，tag中必须含有xlsx,从0开始、以及comment标题
 type ExcelRowDemo struct {
-	Name      string `xlsx:"0" comment:"达人账号名称"`
-	ExpiresIn string `xlsx:"1" comment:"授权到期时间"`
+	Name      string `xlsx:"0" comment:"名称"`
+	ExpiresIn string `xlsx:"1" comment:"到期时间"`
 }
 
 func NewExcel() *Excel {
@@ -36,6 +36,7 @@ func (e *Excel) getTitles(stru interface{}) {
 	}
 }
 
+// 导出
 func (e *Excel) Export(params *ExportParams) (err error) {
 	// 检测导入数据是否空
 	if len(params.Rows) == 0 {
@@ -73,7 +74,7 @@ func (e *Excel) Export(params *ExportParams) (err error) {
 	return
 }
 
-// 导入单个页签数据
+// 导入
 type ImportParams struct {
 	FilePath  string                  //导出的文件全路径
 	SheetName string                  //页签

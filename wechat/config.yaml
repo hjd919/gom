@@ -1,0 +1,13 @@
+# 监听本地的端口
+listen: :8080
+
+# 使用redis来存放access_token
+redis:
+  host: 127.0.0.1:6379
+
+# 微信公众号相关配置
+officialAccountConfig:
+  appID: wx693f4c620712348b
+  appSecret: 8b3e323836403ad73f78453f07d54334
+  token: slsw0520
+  encodingAESKey: SQbvays80pu3G9tasQgGU8FIIX5duPvL4mOwSJb4M9q

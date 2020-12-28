@@ -10,6 +10,9 @@ require (
 	github.com/olivere/elastic v6.2.35+incompatible
 	github.com/olivere/elastic/v7 v7.0.22
 	github.com/pkg/errors v0.9.1
+	github.com/silenceper/wechat v1.2.6
+	github.com/silenceper/wechat/v2 v2.0.4
 	github.com/tealeg/xlsx v1.0.5
 	github.com/tealeg/xlsx/v3 v3.2.3
+	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 )

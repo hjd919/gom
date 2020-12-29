@@ -44,7 +44,7 @@ func NowDate() string {
 
 // 获取当天0点时间戳
 func NowDateSecond() int64 {
-	return ParseDate(DATE).Unix()
+	return ParseDate(NowDate()).Unix()
 }
 
 // 获取当前秒时间戳

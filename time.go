@@ -39,7 +39,7 @@ func YesterdaySecond() int64 {
 
 // 获取当天日期
 func NowDate() string {
-	return ParseDate(DATE).Format(DATE)
+	return time.Now().Format(DATE)
 }
 
 // 获取当天0点时间戳

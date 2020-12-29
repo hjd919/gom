@@ -25,6 +25,21 @@ func ParseDate(ymd string) time.Time {
 	return timeObj
 }
 
+// 获取当天日期
+func NowDate() int64 {
+	return ParseDate(DATE).Format(Date)
+}
+
+// 获取当天0点时间戳
+func NowDateSecond() int64 {
+	return ParseDate(DATE).Unix()
+}
+
+// 获取当前秒时间戳
+func NowSecond() int64 {
+	return time.Now().Unix()
+}
+
 // 获取当前毫秒时间戳
 func NowMillis() int64 {
 	return Millis(time.Now())

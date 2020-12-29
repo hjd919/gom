@@ -25,6 +25,18 @@ func ParseDate(ymd string) time.Time {
 	return timeObj
 }
 
+// 获取昨天日期
+func Yesterday() string {
+	yesterdayStr := time.Now().AddDate(0, 0, -1).Format(DATE)
+	return ParseDate(yesterdayStr).Format(DATE)
+}
+
+// 获取昨天0点时间戳
+func YesterdaySecond() int64 {
+	yesterdayStr := time.Now().AddDate(0, 0, -1).Format(DATE)
+	return ParseDate(yesterdayStr).Unix()
+}
+
 // 获取当天日期
 func NowDate() string {
 	return ParseDate(DATE).Format(DATE)

@@ -14,8 +14,6 @@ import (
 	"sort"
 	"strings"
 	"time"
-
-	"github.com/hjd919/gom"
 )
 
 func NewSms(conf *SmsConf) *Sms {
@@ -46,7 +44,7 @@ type SmsReply struct {
 }
 
 func (t *Sms) Send(p *SmsSendParam) error {
-	templateParam := gom.JsonEncode(p.TemplateParam)
+	templateParam := JsonEncode(p.TemplateParam)
 
 	//组织参数
 	params := map[string]string{

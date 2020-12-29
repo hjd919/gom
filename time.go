@@ -26,8 +26,8 @@ func ParseDate(ymd string) time.Time {
 }
 
 // 获取当天日期
-func NowDate() int64 {
-	return ParseDate(DATE).Format(Date)
+func NowDate() string {
+	return ParseDate(DATE).Format(DATE)
 }
 
 // 获取当天0点时间戳

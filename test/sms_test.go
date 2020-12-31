@@ -1,15 +1,19 @@
-package gom
+package test
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/hjd919/gom"
+)
 
 func TestSms_Send(t *testing.T) {
-	e := NewSms(&SmsConf{
+	e := gom.NewSms(&gom.SmsConf{
 		AccessKeyId:     "LTAI4FbitYh5ExGoED99UUNQ",
 		AccessKeySecret: "--",
 		SignName:        "师生汇",
 		TemplateCode:    "SMS_200185878",
 	})
-	if err := e.Send(&SmsSendParam{
+	if err := e.Send(&gom.SmsSendParam{
 		Phones: []string{"18500223089"},
 		TemplateParam: map[string]interface{}{
 			"code": 12345,

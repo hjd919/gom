@@ -13,13 +13,15 @@ type ExcelRowDemo struct {
 	ExpiresIn string `xlsx:"1" comment:"到期时间"`
 }
 
-func NewExcel() *Excel {
-	return &Excel{}
-}
-
+// excel类
 type Excel struct {
 	file   *xlsx.File //文件资源句柄
 	titles []string   // 标题
+}
+
+// 创建excel
+func NewExcel() *Excel {
+	return &Excel{}
 }
 
 // 导出单个sheet数据
@@ -36,7 +38,7 @@ func (e *Excel) getTitles(stru interface{}) {
 	}
 }
 
-// 导出
+// 导出excel
 func (e *Excel) Export(params *ExportParams) (err error) {
 	// 检测导入数据是否空
 	if len(params.Rows) == 0 {
@@ -74,7 +76,7 @@ func (e *Excel) Export(params *ExportParams) (err error) {
 	return
 }
 
-// 导入
+// 导入excel
 type ImportParams struct {
 	FilePath  string                  //导出的文件全路径
 	SheetName string                  //页签
@@ -105,7 +107,7 @@ func (e *Excel) Import(params *ImportParams) (err error) {
 	return
 }
 
-// 导入多个页签数据
+// 导入所有页签的excel
 type ImportAllParams struct {
 	FilePath   string                             //导出的文件全路径
 	RowHandles map[string]func(r *xlsx.Row) error // map:页签=>处理数据函数

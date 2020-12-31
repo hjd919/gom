@@ -18,7 +18,7 @@ if req.Sort != "" {
 orderStr = strings.Join(orderArr, ",")
 */
 
-// filter - num
+// 数字范围，数组转化为开始和结束数字
 func NumRange(numRange []int64) (startNum, endNum int64) {
 	if len(numRange) == 0 {
 		return
@@ -38,7 +38,7 @@ func NumRange(numRange []int64) (startNum, endNum int64) {
 	return
 }
 
-// filter - date
+// 日期范围，数组转化为开始和结束时间戳
 func DateRange(dateRange []string) (startTime, endTime int64) {
 	if len(dateRange) == 0 {
 		return
@@ -53,18 +53,10 @@ func DateRange(dateRange []string) (startTime, endTime int64) {
 		log.Println("DateRange=", err)
 		return
 	}
-	return startTimeObj.Unix(), endTimeObj.Unix()
+	return startTimeObj.Unix(), endTimeObj.AddDate(0, 0, 1).Unix()
 }
 
-func Order(sortType, sortField string) string {
-	if sortType != "" && sortField != "" {
-		return sortType + " " + sortField
-	} else if sortType != "" && sortField == "" {
-		return sortType
-	}
-	return "id desc"
-}
-
+// 获取select字段（通过结构体tag获取所需的字段）
 func Fields(point interface{}) (str string) {
 	t := reflect.TypeOf(point).Elem()
 	var orms []string
@@ -78,10 +70,19 @@ func Fields(point interface{}) (str string) {
 	return
 }
 
+// 获取分页参数
+func PageParam(num, size int) (pageOffset int, pageSize int) {
+	pageSize = PageSize(size)
+	pageOffset = (PageNum(num) - 1) * pageSize
+	return
+}
+
+// 格式化分页
 func Page(num, size int) (pageNum int, pageSize int) {
 	return PageNum(num), PageSize(size)
 }
 
+// 获取分页页码
 func PageNum(num int) int {
 	if num <= 0 {
 		return 1
@@ -89,6 +90,7 @@ func PageNum(num int) int {
 	return num
 }
 
+// 获取分页长度
 func PageSize(size int) int {
 	if size <= 0 {
 		return 15

@@ -11,12 +11,24 @@ import (
 
 var __mysql *gomMysql
 
+// 获取mysql连接
 func DB() *gorm.DB {
 	return __mysql.db
 }
 
+// 连接mysql
 func MysqlInit(conf *MysqlConfig) {
 	__mysql = newGomMysql(ctx, conf)
+}
+
+// 获取mysql排序
+func Order(sortType, sortField string) string {
+	if sortType != "" && sortField != "" {
+		return sortType + " " + sortField
+	} else if sortType != "" && sortField == "" {
+		return sortType
+	}
+	return "id desc"
 }
 
 type MysqlConfig struct {

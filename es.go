@@ -17,18 +17,22 @@ import (
 
 var __es *gomEs
 
+// 获取es连接
 func Es() *elastic.Client {
 	return __es.orm
 }
 
+// 获取es批量处理连接
 func BulkProcessor() *elastic.BulkProcessor {
 	return __es.bulkProcessor
 }
 
+// 连接es
 func EsInit(conf *EsConfig) {
 	__es = newGomEs(ctx, conf)
 }
 
+// 获取es排序对象
 func EsSort(sortField, sortOrder string) elastic.Sorter {
 	sorter := elastic.NewFieldSort(sortField)
 	if sortOrder == "desc" {
@@ -39,6 +43,7 @@ func EsSort(sortField, sortOrder string) elastic.Sorter {
 	return sorter
 }
 
+// 打印查询语句
 func PrintQuery(src interface{}) {
 	fmt.Println("*****")
 	data, err := json.MarshalIndent(src, "", "  ")
@@ -48,6 +53,7 @@ func PrintQuery(src interface{}) {
 	fmt.Println(string(data))
 }
 
+// 生成es的id
 func ESId(v interface{}) string {
 	idmd5, _ := gmd5.Encrypt(v)
 	return idmd5[0:20]

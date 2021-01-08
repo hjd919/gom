@@ -8,7 +8,6 @@ require (
 	github.com/go-xorm/xorm v0.7.9 // indirect
 	github.com/gogf/gf v1.14.4
 	github.com/jinzhu/gorm v1.9.16
-	github.com/lifei6671/gocaptcha v0.1.1
 	github.com/olivere/elastic v6.2.35+incompatible // indirect
 	github.com/olivere/elastic/v7 v7.0.22
 	github.com/silenceper/wechat v1.2.6

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/hjd919/gom"
 )
 
@@ -46,20 +45,20 @@ func (c *captchaCache) Get(key string) (randText string) {
 func (c *captchaCache) Del(key string) {
 }
 
-func gincaptcha() {
-	// 设置图片验证码字体目录
-	captcha.SetFontPath("../captcha/fonts")
-	r := gin.Default()
-	var cache captcha.Cache = &captchaCache{}
-	r.GET("/ping", func(c *gin.Context) {
-		captcha.New("register-uid", cache).Output(c.Writer, 150, 50)
-	})
-	r.Run() // listen and serve on 0.0.0.0:8080
-}
+// func gincaptcha() {
+// 	// 设置图片验证码字体目录
+// 	captcha.SetFontPath("../captcha/fonts")
+// 	r := gin.Default()
+// 	var cache captcha.Cache = &captchaCache{}
+// 	r.GET("/ping", func(c *gin.Context) {
+// 		captcha.New("register-uid", cache).Output(c.Writer, 150, 50)
+// 	})
+// 	r.Run() // listen and serve on 0.0.0.0:8080
+// }
 
 func main() {
 	// ExcelExport()
 	// timerfc()
 
-	gincaptcha()
+	// gincaptcha()
 }

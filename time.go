@@ -7,6 +7,12 @@ const DATE = "2006-01-02"
 const DATELOG = "20060102"
 const TIME = "15:03:04"
 
+// 获取iso8601time = "2006-01-02T15:04:05-0700"
+// 返回如：2021-01-08T20:52:55+0800
+func Iso8601(t time.Time) string {
+	return t.Format(time.RFC3339)
+}
+
 // 废除
 func Parse(ymdhis string) time.Time {
 	timeObj, _ := time.ParseInLocation("2006-01-02 15:04:05", ymdhis, time.Local)

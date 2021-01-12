@@ -39,4 +39,7 @@ func TestMysql_Conn(t *testing.T) {
 	fmt.Println(gom.JsonEncode(c))
 }
 
+// 生成表结构
+// gormt -H=101.200.41.140 -d=hjd -p=Yisai726 -u=root --port=3306 -F=false
+
 // aggs tmysqlt

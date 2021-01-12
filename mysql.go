@@ -1,13 +1,17 @@
 package gom
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"time"
 
 	"github.com/jinzhu/gorm"
 )
+
+// 文档
+// http://gorm.book.jasperxu.com/database.html#dbc
+// 生成结构体
+// https://github.com/xxjwxc/gormt
 
 var __mysql *gomMysql
 
@@ -17,8 +21,8 @@ func DB() *gorm.DB {
 }
 
 // 连接mysql
-func MysqlInit(conf *MysqlConfig) {
-	__mysql = newGomMysql(ctx, conf)
+func Connect(conf *MysqlConfig) {
+	__mysql = newGomMysql(conf)
 }
 
 // 获取mysql排序
@@ -36,7 +40,9 @@ type MysqlConfig struct {
 	User        string
 	Password    string
 	Host        string
-	Name        string
+	Port        string
+	Database    string
+	Charset     string
 	TablePrefix string
 }
 
@@ -44,20 +50,20 @@ type MysqlConfig struct {
 type gomMysql struct {
 	db   *gorm.DB
 	conf *MysqlConfig
-	ctx  context.Context
 }
 
-func newGomMysql(ctx context.Context, conf *MysqlConfig) *gomMysql {
+func newGomMysql(conf *MysqlConfig) *gomMysql {
 	self := &gomMysql{
-		ctx:  ctx,
 		conf: conf,
 	}
 	var err error
-	db, err := gorm.Open(conf.Type, fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8&parseTime=True&loc=Local",
+	db, err := gorm.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=%s&parseTime=True&loc=Local",
 		conf.User,
 		conf.Password,
 		conf.Host,
-		conf.Name))
+		conf.Port,
+		conf.Database,
+		conf.Charset))
 
 	if err != nil {
 		log.Fatalf("models.Setup err: %v", err)
@@ -77,22 +83,22 @@ func newGomMysql(ctx context.Context, conf *MysqlConfig) *gomMysql {
 	self.db = db
 
 	// heath
-	go self.ping()
+	// go self.ping()
 
 	return self
 }
 
-func (self *gomMysql) ping() {
-	for {
-		select {
-		case <-self.ctx.Done():
-			// 程序退出，断开bulkProcessor
-			log.Println("程序退出，关闭db")
-			self.db.Close()
-			return
-		}
-	}
-}
+// func (self *gomMysql) ping() {
+// 	for {
+// 		select {
+// 		case <-self.ctx.Done():
+// 			// 程序退出，断开bulkProcessor
+// 			log.Println("程序退出，关闭db")
+// 			self.db.Close()
+// 			return
+// 		}
+// 	}
+// }
 
 // updateTimeStampForCreateCallback will set `CreateTime`, `UpdateTime` when creating
 func updateTimeStampForCreateCallback(scope *gorm.Scope) {

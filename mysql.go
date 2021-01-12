@@ -2,7 +2,9 @@ package gom
 
 import (
 	"fmt"
-	"log"
+
+	_ "github.com/go-sql-driver/mysql"
+
 	"time"
 
 	"github.com/jinzhu/gorm"
@@ -66,7 +68,7 @@ func newGomMysql(conf *MysqlConfig) *gomMysql {
 		conf.Charset))
 
 	if err != nil {
-		log.Fatalf("models.Setup err: %v", err)
+		panic(err)
 	}
 
 	gorm.DefaultTableNameHandler = func(db *gorm.DB, defaultTableName string) string {
@@ -74,7 +76,7 @@ func newGomMysql(conf *MysqlConfig) *gomMysql {
 	}
 
 	db.SingularTable(true)
-	db.Callback().Create().Replace("gorm:update_time_stamp", updateTimeStampForCreateCallback)
+	db.Callback().Create().Replace("gorm:create_time_stamp", updateTimeStampForCreateCallback)
 	db.Callback().Update().Replace("gorm:update_time_stamp", updateTimeStampForUpdateCallback)
 	db.Callback().Delete().Replace("gorm:delete", deleteCallback)
 	db.DB().SetMaxIdleConns(10)

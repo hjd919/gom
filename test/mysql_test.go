@@ -24,14 +24,16 @@ type Category struct {
 
 // init index tmysqlt
 func TestMysql_Conn(t *testing.T) {
-	// hmysql.connect("101.200.41.141", 7306, "hjd", "root", "Yisai726", "utf8mb4")
+	// 连接数据库
 	gom.Connect(&gom.MysqlConfig{
-		User:     "101.200.41.141",
+		User:     "root",
 		Password: "Yisai726",
-		Host:     "7306",
+		Host:     "101.200.41.141",
+		Port:     "7306",
 		Database: "hjd",
 		Charset:  "utf8mb4",
 	})
+	// 操作表
 	c := &Category{}
 	gom.DB().Last(c)
 	fmt.Println(gom.JsonEncode(c))

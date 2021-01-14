@@ -34,3 +34,9 @@ func NowMillis() int64 {
 func Millis(timeObj time.Time) int64 {
 	return timeObj.UnixNano() / 1e6
 }
+
+// 获取上个月第一天
+func GetFirstDateOfLastMonth(d time.Time) time.Time {
+	d = d.AddDate(0, -1, -d.Day()+1)
+	return time.Date(d.Year(), d.Month(), d.Day(), 0, 0, 0, 0, d.Location())
+}

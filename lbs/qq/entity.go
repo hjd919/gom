@@ -1,4 +1,4 @@
-package gaode
+package qq
 
 type GeocodeRegeo struct {
 	Status    int    `json:"status"`

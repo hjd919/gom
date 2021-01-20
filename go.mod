@@ -4,10 +4,10 @@ go 1.14
 
 require (
 	github.com/edoger/zkits-logger v1.3.1
-	github.com/gin-gonic/gin v1.6.3
+	github.com/gin-gonic/gin v1.6.3 // indirect
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/go-xorm/xorm v0.7.9 // indirect
-	github.com/gogf/gf v1.14.4
+	github.com/gogf/gf v1.13.7
 	github.com/gookit/color v1.3.6 // indirect
 	github.com/jinzhu/gorm v1.9.16
 	github.com/leodido/go-urn v1.2.1 // indirect

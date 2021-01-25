@@ -97,3 +97,15 @@ func PageSize(size int) int {
 	}
 	return size
 }
+
+// 获取排序参数
+func Sort(field, by string) (sort string) {
+	sortField, sortType := "id", "desc"
+	if field != "" {
+		sortField = field
+	}
+	if by != "" {
+		sortType = by
+	}
+	return sortField + " " + sortType
+}

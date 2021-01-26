@@ -18,6 +18,13 @@ if req.Sort != "" {
 orderStr = strings.Join(orderArr, ",")
 */
 
+type ListParams struct {
+	PageNum   int    `json:"page_num"`
+	PageSize  int    `json:"page_size"`
+	SortType  string `json:"sort_type"`
+	SortField string `json:"sort_field"`
+}
+
 // 数字范围，数组转化为开始和结束数字
 func NumRange(numRange []int64) (startNum, endNum int64) {
 	if len(numRange) == 0 {

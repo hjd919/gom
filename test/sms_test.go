@@ -8,7 +8,7 @@ import (
 
 func TestSms_Send(t *testing.T) {
 	e := gom.NewSms(&gom.SmsConf{
-		AccessKeyId:     "LTAI4FbitYh5ExGoED99UUNQ",
+		AccessKeyId:     "-",
 		AccessKeySecret: "--",
 		SignName:        "师生汇",
 		TemplateCode:    "SMS_200185878",
